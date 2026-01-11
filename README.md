@@ -4,12 +4,17 @@
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
 
-[中文版](./README.zh-CN.md) | **English** | [Language Switch →](#language-switch)
+**English** | [中文版](./README.zh-CN.md)
 
 ---
 
-Multi-camera video synchronization using audio cross-correlation. Automatically align multiple video timelines by analyzing audio waveforms with millisecond precision.
+🙆‍♀️ Multi-camera recording alignment timeline tool, **a must-have for research!**  
 
+📱 Aligns via audio, bypassing the additional processing inconsistencies of video source data on Apple, Android, and Xiaomi devices, as well as the inherent inaccuracies of the recording equipment's system time.
+
+✨ Multi-camera video synchronization using audio cross-correlation. Automatically align multiple video timelines by analyzing audio waveforms with millisecond precision.
+
+![eg_img](<cover.png>)
 ## Features
 
 - 🎯 **High Precision** - Millisecond-level sync accuracy (±2ms)
@@ -30,11 +35,11 @@ Video B audio: ────────────█████████�
                       offset Δt
 ```
 
-## Requirements
+<!-- ## Requirements (uncertain)
 
 - **Node.js**: >= 16.0.0
 - **Browser**: Must support SharedArrayBuffer (Chrome 92+, Firefox 79+, Safari 15.2+)
-- **HTTPS**: Required for SharedArrayBuffer in production
+- **HTTPS**: Required for SharedArrayBuffer in production -->
 
 ## Installation
 

@@ -4,11 +4,13 @@
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
-**中文版** | [English](./README.md) | [语言切换 →](#语言切换)
+[English](./README.md) | **中文版**
 
 ---
-
-基于音频互相关的多机位视频同步库。使用 FFT 加速的互相关算法，通过分析音频波形自动对齐多个视频的时间轴，精度可达毫秒级。
+🙆‍♀️  多机位录影对齐时间轴工具，**科研常备！**  
+📱 通过音频对齐，绕开视频源数据在不同系统（苹果、安卓和小米）不一致的额外处理，以及录像设备系统时间本身就不正确的问题。
+🌟 基于音频互相关的多机位视频同步库。使用 FFT 加速的互相关算法，通过分析音频波形自动对齐多个视频的时间轴，精度可达毫秒级。
+![eg_img](<cover.png>)
 
 ## 特性
 
@@ -30,11 +32,11 @@
                   偏移量 Δt
 ```
 
-## 环境要求
+<!-- ## 环境要求 (不确定)
 
 - **Node.js**: >= 16.0.0
 - **浏览器**: 需要支持 SharedArrayBuffer（Chrome 92+、Firefox 79+、Safari 15.2+）
-- **HTTPS**: 生产环境需要 HTTPS 才能使用 SharedArrayBuffer
+- **HTTPS**: 生产环境需要 HTTPS 才能使用 SharedArrayBuffer -->
 
 ## 安装
 

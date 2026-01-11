@@ -211,7 +211,32 @@
         refOption4: 'Video 4 (Cam 4)',
         syncBtn: 'Start Audio Sync Analysis',
         progressText: 'Preparing...',
-        langBtn: '中文'
+        langBtn: '中文',
+        // Dynamic messages
+        selectedVideo: 'Selected video',
+        extractingAudio: 'Extracting audio from video',
+        videoDuration: 'Video duration',
+        analyzing: 'analyzing first',
+        audioExtracted: 'Audio extraction completed',
+        samples: 'samples',
+        calculatingOffset: 'Calculating offset for video',
+        relativeToRef: 'relative to reference video',
+        offset: 'Offset',
+        confidence: 'Confidence',
+        error: 'Error',
+        syncFailed: 'Sync failed',
+        referenceVideo: 'Reference Video:',
+        baseTime: 'Base Time',
+        delayed: 'delayed',
+        ahead: 'ahead',
+        high: 'High',
+        medium: 'Medium', 
+        low: 'Low',
+        offsetSamples: 'Offset samples',
+        sampleRate: 'Sample rate',
+        toolReady: 'Audio sync tool ready (using Web Audio API)',
+        selectAtLeast2: 'Please select at least 2 video files',
+        refNotSelected: 'Reference video not selected'
       },
       zh: {
         title: '🎬 Audio Video Sync 测试',
@@ -231,7 +256,32 @@
         refOption4: '视频 4 (Cam 4)',
         syncBtn: '开始音频同步分析',
         progressText: '准备中...',
-        langBtn: 'English'
+        langBtn: 'English',
+        // Dynamic messages
+        selectedVideo: '已选择视频',
+        extractingAudio: '正在提取视频',
+        videoDuration: '视频时长',
+        analyzing: '分析前',
+        audioExtracted: '音频提取完成',
+        samples: '个采样点',
+        calculatingOffset: '正在计算视频',
+        relativeToRef: '相对于参考视频的偏移',
+        offset: '偏移',
+        confidence: '置信度',
+        error: '错误',
+        syncFailed: '同步失败',
+        referenceVideo: '参考视频:',
+        baseTime: '基准时间',
+        delayed: '延迟',
+        ahead: '领先',
+        high: '高',
+        medium: '中',
+        low: '低',
+        offsetSamples: '偏移采样点',
+        sampleRate: '采样率',
+        toolReady: '音频同步工具已就绪（使用 Web Audio API）',
+        selectAtLeast2: '请至少选择 2 个视频文件',
+        refNotSelected: '参考视频未选择'
       }
     };
     
@@ -281,7 +331,8 @@
         window.videoFiles[index] = file;
         document.getElementById(`filename${index}`).textContent = file.name;
         input.parentElement.classList.add('has-file');
-        log(`已选择视频 ${index + 1}: ${file.name}`);
+        const t = translations[currentLang];
+        log(`${t.selectedVideo} ${index + 1}: ${file.name}`);
         updateSyncButton();
       }
     };
@@ -293,7 +344,8 @@
     
     // 使用 Web Audio API 提取音频
     const extractAudioFromVideo = async (file, index) => {
-      log(`正在提取视频 ${index + 1} 的音频...`);
+      const t = translations[currentLang];
+      log(`${t.extractingAudio} ${index + 1} ${currentLang === 'en' ? 'audio...' : '的音频...'}`);
       
       return new Promise((resolve, reject) => {
         const video = document.createElement('video');
@@ -302,7 +354,7 @@
         
         video.onloadedmetadata = async () => {
           const duration = Math.min(video.duration, 30); // 最多30秒
-          log(`视频 ${index + 1} 时长: ${video.duration.toFixed(2)}s, 分析前 ${duration.toFixed(2)}s`);
+          log(`${currentLang === 'en' ? 'Video' : '视频'} ${index + 1} ${t.videoDuration}: ${video.duration.toFixed(2)}s, ${t.analyzing} ${duration.toFixed(2)}s`);
           
           try {
             // 使用 AudioContext 解码音频
@@ -342,7 +394,7 @@
               downsampled[i] = samples[Math.floor(i * ratio)];
             }
             
-            log(`视频 ${index + 1} 音频提取完成，${downsampled.length} 个采样点 (${(downsampled.length / targetSampleRate).toFixed(2)}s)`);
+            log(`${currentLang === 'en' ? 'Video' : '视频'} ${index + 1} ${t.audioExtracted}, ${downsampled.length} ${t.samples} (${(downsampled.length / targetSampleRate).toFixed(2)}s)`);
             
             URL.revokeObjectURL(video.src);
             audioContext.close();
@@ -356,7 +408,7 @@
         
         video.onerror = () => {
           URL.revokeObjectURL(video.src);
-          reject(new Error(`无法加载视频 ${index + 1}`));
+          reject(new Error(`${t.error}: ${currentLang === 'en' ? 'Cannot load video' : '无法加载视频'} ${index + 1}`));
         };
       });
     };
@@ -529,8 +581,10 @@
     // 开始同步
     window.startSync = async () => {
       const videos = window.videoFiles.filter(f => f);
+      const t = translations[currentLang];
+      
       if (videos.length < 2) {
-        alert('请至少选择 2 个视频文件');
+        alert(t.selectAtLeast2);
         return;
       }
       
@@ -549,7 +603,7 @@
         for (let i = 0; i < 4; i++) {
           if (window.videoFiles[i]) {
             document.getElementById('progressText').textContent = 
-              `正在提取视频 ${i + 1} 的音频...`;
+              `${t.extractingAudio} ${i + 1} ${currentLang === 'en' ? 'audio...' : '的音频...'}`;
             const samples = await extractAudioFromVideo(window.videoFiles[i], i);
             audioData.push(preprocessAudio(samples));
             validIndices.push(i);
@@ -559,7 +613,7 @@
         // 找到参考视频在有效索引中的位置
         const refIndexInValid = validIndices.indexOf(referenceIndex);
         if (refIndexInValid === -1) {
-          throw new Error('参考视频未选择');
+          throw new Error(t.refNotSelected);
         }
         
         const referenceAudio = audioData[refIndexInValid];
@@ -582,9 +636,9 @@
           }
           
           document.getElementById('progressText').textContent = 
-            `正在计算视频 ${videoIndex + 1} 的偏移...`;
+            `${t.calculatingOffset} ${videoIndex + 1} ${currentLang === 'en' ? 'offset...' : '的偏移...'}`;
           
-          log(`计算视频 ${videoIndex + 1} 相对于参考视频的偏移...`);
+          log(`${t.calculatingOffset} ${videoIndex + 1} ${t.relativeToRef}...`);
           
           const targetAudio = audioData[i];
           const correlation = crossCorrelate(referenceAudio, targetAudio);
@@ -592,7 +646,7 @@
           const offsetSeconds = offsetSamples / sampleRate;
           const confidence = calculateConfidence(referenceAudio, targetAudio, correlation, offsetSamples);
           
-          log(`视频 ${videoIndex + 1}: 偏移 = ${offsetSeconds.toFixed(3)}s, 置信度 = ${(confidence * 100).toFixed(1)}%`);
+          log(`${currentLang === 'en' ? 'Video' : '视频'} ${videoIndex + 1}: ${t.offset} = ${offsetSeconds.toFixed(3)}s, ${t.confidence} = ${(confidence * 100).toFixed(1)}%`);
           
           results.push({
             videoIndex,
@@ -607,10 +661,10 @@
         displayResults(results, referenceIndex);
         
       } catch (err) {
-        log(`错误: ${err.message}`);
+        log(`${t.error}: ${err.message}`);
         console.error(err);
         document.getElementById('results').innerHTML = 
-          `<div class="error">同步失败: ${err.message}</div>`;
+          `<div class="error">${t.syncFailed}: ${err.message}</div>`;
         document.getElementById('resultsSection').style.display = 'block';
       } finally {
         document.getElementById('syncBtn').disabled = false;
@@ -620,31 +674,34 @@
     
     const displayResults = (results, referenceIndex) => {
       const resultsEl = document.getElementById('results');
+      const t = translations[currentLang];
       
-      let html = `<p><strong>参考视频:</strong> 视频 ${referenceIndex + 1}</p>`;
+      let html = `<p><strong>${t.referenceVideo}</strong> ${currentLang === 'en' ? 'Video' : '视频'} ${referenceIndex + 1}</p>`;
       
       results.forEach(r => {
         const confidenceClass = r.confidence >= 0.7 ? 'high' : r.confidence >= 0.4 ? 'medium' : 'low';
         const offsetStr = r.offsetSeconds >= 0 
-          ? `+${r.offsetSeconds.toFixed(3)}s (延迟)` 
-          : `${r.offsetSeconds.toFixed(3)}s (领先)`;
+          ? `+${r.offsetSeconds.toFixed(3)}s (${t.delayed})` 
+          : `${r.offsetSeconds.toFixed(3)}s (${t.ahead})`;
+        
+        const confidenceText = r.confidence >= 0.7 ? `✓ ${t.high}` : r.confidence >= 0.4 ? `⚠ ${t.medium}` : `✗ ${t.low}`;
         
         html += `
           <div class="result-item ${r.isReference ? 'reference' : ''}">
             <div class="video-id">
-              视频 ${r.videoIndex + 1} 
-              ${r.isReference ? '(参考)' : ''}
+              ${currentLang === 'en' ? 'Video' : '视频'} ${r.videoIndex + 1} 
+              ${r.isReference ? (currentLang === 'en' ? '(Reference)' : '(参考)') : ''}
             </div>
             <div class="offset">
-              ${r.isReference ? '基准时间' : offsetStr}
+              ${r.isReference ? t.baseTime : offsetStr}
             </div>
             <div class="confidence ${confidenceClass}">
-              置信度: ${(r.confidence * 100).toFixed(1)}%
-              ${r.confidence >= 0.7 ? '✓ 高' : r.confidence >= 0.4 ? '⚠ 中' : '✗ 低'}
+              ${t.confidence}: ${(r.confidence * 100).toFixed(1)}%
+              ${confidenceText}
             </div>
             ${!r.isReference ? `
               <div style="margin-top:10px;font-size:12px;color:#666;">
-                偏移采样点: ${r.offsetSamples} (采样率: 16000 Hz)
+                ${t.offsetSamples}: ${r.offsetSamples} (${t.sampleRate}: 16000 Hz)
               </div>
             ` : ''}
           </div>
@@ -657,7 +714,7 @@
     
     // Initialize
     updateLanguage();
-    log(currentLang === 'en' ? 'Audio sync tool ready (using Web Audio API)' : '音频同步工具已就绪（使用 Web Audio API）');
+    log(translations[currentLang].toolReady);
     updateSyncButton();
   </script>
 </body>
