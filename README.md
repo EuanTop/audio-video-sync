@@ -52,7 +52,7 @@ npm install audio-video-sync @ffmpeg/ffmpeg @ffmpeg/util
 ### Clone and Setup
 
 ```bash
-git clone https://github.com/yourusername/audio-video-sync.git
+git clone https://github.com/EuanTop/audio-video-sync.git
 cd audio-video-sync
 npm install
 ```
@@ -62,11 +62,6 @@ npm install
 ```bash
 # Build the package
 npm run build
-
-# This generates:
-# - dist/index.js (CommonJS)
-# - dist/index.esm.js (ES Module)
-# - dist/index.d.ts (TypeScript definitions)
 ```
 
 ### Test the Build

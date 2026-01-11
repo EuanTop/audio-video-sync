@@ -49,7 +49,7 @@ npm install audio-video-sync @ffmpeg/ffmpeg @ffmpeg/util
 ### 克隆和设置
 
 ```bash
-git clone https://github.com/yourusername/audio-video-sync.git
+git clone https://github.com/EuanTop/audio-video-sync.git
 cd audio-video-sync
 npm install
 ```
