@@ -1,0 +1,32 @@
+# Source files (TypeScript source is not needed, only dist)
+src/
+
+# Test files
+test.html
+*.test.ts
+*.spec.ts
+__tests__/
+
+# Config files
+tsconfig.json
+rollup.config.js
+.eslintrc*
+.prettierrc*
+
+# Development files
+.git/
+.gitignore
+.vscode/
+.idea/
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Package manager
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

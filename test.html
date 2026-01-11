@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Video Sync - Test Page</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .language-switch {
+      background: none;
+      color: #666;
+      border: none;
+      padding: 0;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: underline;
+      transition: color 0.3s;
+    }
+    .language-switch:hover { 
+      color: #999; 
+      background: none !important;
+    }
+    
+    h1 { color: #333; margin: 0; }
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .video-inputs {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+    .video-input {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .video-input:hover { border-color: #007bff; background: #f8f9fa; }
+    .video-input.has-file { border-color: #28a745; background: #e8f5e9; }
+    .video-input input { display: none; }
+    .video-input .label { font-size: 14px; color: #666; }
+    .video-input .filename { font-size: 12px; color: #28a745; margin-top: 8px; word-break: break-all; }
+    
+    .reference-select {
+      margin: 15px 0;
+      padding: 10px;
+      background: #fff3cd;
+      border-radius: 4px;
+    }
+    
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover { background: #0056b3; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    
+    .progress {
+      margin: 15px 0;
+      padding: 10px;
+      background: #e3f2fd;
+      border-radius: 4px;
+      display: none;
+    }
+    .progress.active { display: block; }
+    
+    .results {
+      margin-top: 20px;
+    }
+    .result-item {
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 6px;
+      background: #f8f9fa;
+      border-left: 4px solid #007bff;
+    }
+    .result-item.reference { border-left-color: #28a745; }
+    .result-item .video-id { font-weight: bold; font-size: 16px; }
+    .result-item .offset { font-size: 24px; color: #007bff; margin: 10px 0; }
+    .result-item .confidence { font-size: 14px; color: #666; }
+    .result-item .confidence.high { color: #28a745; }
+    .result-item .confidence.medium { color: #ffc107; }
+    .result-item .confidence.low { color: #dc3545; }
+    
+    .error { color: #dc3545; padding: 10px; background: #f8d7da; border-radius: 4px; }
+    
+    #log {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎬 Audio Video Sync Test</h1>
+    <button class="language-switch" onclick="toggleLanguage()">中文</button>
+  </div>
+  <p id="description">Multi-camera video synchronization test tool based on audio cross-correlation (using Web Audio API)</p>
+  
+  <div class="section">
+    <h2 id="section1-title">1. Select Video Files</h2>
+    <div class="video-inputs">
+      <div class="video-input" onclick="document.getElementById('video0').click()">
+        <input type="file" id="video0" accept="video/*" onchange="handleFileSelect(0, this)">
+        <div class="label" id="video0-label">📹 Video 1 (Cam 1)</div>
+        <div class="filename" id="filename0"></div>
+      </div>
+      <div class="video-input" onclick="document.getElementById('video1').click()">
+        <input type="file" id="video1" accept="video/*" onchange="handleFileSelect(1, this)">
+        <div class="label" id="video1-label">📹 Video 2 (Cam 2)</div>
+        <div class="filename" id="filename1"></div>
+      </div>
+      <div class="video-input" onclick="document.getElementById('video2').click()">
+        <input type="file" id="video2" accept="video/*" onchange="handleFileSelect(2, this)">
+        <div class="label" id="video2-label">📹 Video 3 (Cam 3)</div>
+        <div class="filename" id="filename2"></div>
+      </div>
+      <div class="video-input" onclick="document.getElementById('video3').click()">
+        <input type="file" id="video3" accept="video/*" onchange="handleFileSelect(3, this)">
+        <div class="label" id="video3-label">📹 Video 4 (Cam 4)</div>
+        <div class="filename" id="filename3"></div>
+      </div>
+    </div>
+    
+    <div class="reference-select">
+      <label>
+        <strong id="reference-label">Reference Video (aligned with RFID data):</strong>
+        <select id="referenceIndex">
+          <option value="0" id="ref-option0">Video 1 (Cam 1)</option>
+          <option value="1" id="ref-option1">Video 2 (Cam 2)</option>
+          <option value="2" id="ref-option2">Video 3 (Cam 3)</option>
+          <option value="3" id="ref-option3">Video 4 (Cam 4)</option>
+        </select>
+      </label>
+    </div>
+  </div>
+  
+  <div class="section">
+    <h2 id="section2-title">2. Start Synchronization</h2>
+    <button id="syncBtn" onclick="startSync()" disabled>Start Audio Sync Analysis</button>
+    <div class="progress" id="progress">
+      <span id="progressText">Preparing...</span>
+    </div>
+  </div>
+  
+  <div class="section results" id="resultsSection" style="display:none">
+    <h2 id="section3-title">3. Sync Results</h2>
+    <div id="results"></div>
+  </div>
+  
+  <div class="section">
+    <h2 id="log-title">Log</h2>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    // Language support
+    let currentLang = 'en';
+    
+    const translations = {
+      en: {
+        title: '🎬 Audio Video Sync Test',
+        description: 'Multi-camera video synchronization test tool based on audio cross-correlation (using Web Audio API)',
+        section1: '1. Select Video Files',
+        section2: '2. Start Synchronization', 
+        section3: '3. Sync Results',
+        logTitle: 'Log',
+        video1: '📹 Video 1 (Cam 1)',
+        video2: '📹 Video 2 (Cam 2)',
+        video3: '📹 Video 3 (Cam 3)',
+        video4: '📹 Video 4 (Cam 4)',
+        referenceLabel: 'Reference Video (aligned with RFID data):',
+        refOption1: 'Video 1 (Cam 1)',
+        refOption2: 'Video 2 (Cam 2)',
+        refOption3: 'Video 3 (Cam 3)',
+        refOption4: 'Video 4 (Cam 4)',
+        syncBtn: 'Start Audio Sync Analysis',
+        progressText: 'Preparing...',
+        langBtn: '中文'
+      },
+      zh: {
+        title: '🎬 Audio Video Sync 测试',
+        description: '基于音频互相关的多机位视频同步测试工具（使用 Web Audio API）',
+        section1: '1. 选择视频文件',
+        section2: '2. 开始同步',
+        section3: '3. 同步结果', 
+        logTitle: '日志',
+        video1: '📹 视频 1 (Cam 1)',
+        video2: '📹 视频 2 (Cam 2)',
+        video3: '📹 视频 3 (Cam 3)',
+        video4: '📹 视频 4 (Cam 4)',
+        referenceLabel: '参考视频（与 RFID 数据对齐的视频）：',
+        refOption1: '视频 1 (Cam 1)',
+        refOption2: '视频 2 (Cam 2)',
+        refOption3: '视频 3 (Cam 3)',
+        refOption4: '视频 4 (Cam 4)',
+        syncBtn: '开始音频同步分析',
+        progressText: '准备中...',
+        langBtn: 'English'
+      }
+    };
+    
+    const updateLanguage = () => {
+      const t = translations[currentLang];
+      document.querySelector('h1').textContent = t.title;
+      document.getElementById('description').textContent = t.description;
+      document.getElementById('section1-title').textContent = t.section1;
+      document.getElementById('section2-title').textContent = t.section2;
+      document.getElementById('section3-title').textContent = t.section3;
+      document.getElementById('log-title').textContent = t.logTitle;
+      document.getElementById('video0-label').textContent = t.video1;
+      document.getElementById('video1-label').textContent = t.video2;
+      document.getElementById('video2-label').textContent = t.video3;
+      document.getElementById('video3-label').textContent = t.video4;
+      document.getElementById('reference-label').textContent = t.referenceLabel;
+      document.getElementById('ref-option0').textContent = t.refOption1;
+      document.getElementById('ref-option1').textContent = t.refOption2;
+      document.getElementById('ref-option2').textContent = t.refOption3;
+      document.getElementById('ref-option3').textContent = t.refOption4;
+      document.getElementById('syncBtn').textContent = t.syncBtn;
+      document.getElementById('progressText').textContent = t.progressText;
+      document.querySelector('.language-switch').textContent = t.langBtn;
+      document.documentElement.lang = currentLang === 'en' ? 'en' : 'zh-CN';
+    };
+    
+    window.toggleLanguage = () => {
+      currentLang = currentLang === 'en' ? 'zh' : 'en';
+      updateLanguage();
+    };
+    
+    // Global variables
+    window.videoFiles = [null, null, null, null];
+    
+    const log = (msg) => {
+      const logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString();
+      logEl.textContent += `[${time}] ${msg}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(msg);
+    };
+    
+    // 文件选择处理
+    window.handleFileSelect = (index, input) => {
+      const file = input.files[0];
+      if (file) {
+        window.videoFiles[index] = file;
+        document.getElementById(`filename${index}`).textContent = file.name;
+        input.parentElement.classList.add('has-file');
+        log(`已选择视频 ${index + 1}: ${file.name}`);
+        updateSyncButton();
+      }
+    };
+    
+    const updateSyncButton = () => {
+      const hasFiles = window.videoFiles.filter(f => f).length >= 2;
+      document.getElementById('syncBtn').disabled = !hasFiles;
+    };
+    
+    // 使用 Web Audio API 提取音频
+    const extractAudioFromVideo = async (file, index) => {
+      log(`正在提取视频 ${index + 1} 的音频...`);
+      
+      return new Promise((resolve, reject) => {
+        const video = document.createElement('video');
+        video.muted = true;
+        video.src = URL.createObjectURL(file);
+        
+        video.onloadedmetadata = async () => {
+          const duration = Math.min(video.duration, 30); // 最多30秒
+          log(`视频 ${index + 1} 时长: ${video.duration.toFixed(2)}s, 分析前 ${duration.toFixed(2)}s`);
+          
+          try {
+            // 使用 AudioContext 解码音频
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // 读取文件为 ArrayBuffer
+            const arrayBuffer = await file.arrayBuffer();
+            
+            // 解码音频
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            
+            // 获取单声道数据
+            let samples;
+            if (audioBuffer.numberOfChannels === 1) {
+              samples = audioBuffer.getChannelData(0);
+            } else {
+              // 混合为单声道
+              const length = audioBuffer.length;
+              samples = new Float32Array(length);
+              const numChannels = audioBuffer.numberOfChannels;
+              for (let ch = 0; ch < numChannels; ch++) {
+                const channelData = audioBuffer.getChannelData(ch);
+                for (let i = 0; i < length; i++) {
+                  samples[i] += channelData[i] / numChannels;
+                }
+              }
+            }
+            
+            // 降采样到 16000 Hz
+            const targetSampleRate = 16000;
+            const ratio = audioBuffer.sampleRate / targetSampleRate;
+            const maxSamples = Math.floor(duration * targetSampleRate);
+            const downsampledLength = Math.min(Math.floor(samples.length / ratio), maxSamples);
+            const downsampled = new Float32Array(downsampledLength);
+            
+            for (let i = 0; i < downsampledLength; i++) {
+              downsampled[i] = samples[Math.floor(i * ratio)];
+            }
+            
+            log(`视频 ${index + 1} 音频提取完成，${downsampled.length} 个采样点 (${(downsampled.length / targetSampleRate).toFixed(2)}s)`);
+            
+            URL.revokeObjectURL(video.src);
+            audioContext.close();
+            
+            resolve(downsampled);
+          } catch (err) {
+            URL.revokeObjectURL(video.src);
+            reject(err);
+          }
+        };
+        
+        video.onerror = () => {
+          URL.revokeObjectURL(video.src);
+          reject(new Error(`无法加载视频 ${index + 1}`));
+        };
+      });
+    };
+    
+    // 预处理音频
+    const preprocessAudio = (samples) => {
+      const result = new Float32Array(samples.length);
+      
+      let sum = 0;
+      for (let i = 0; i < samples.length; i++) {
+        sum += samples[i];
+      }
+      const mean = sum / samples.length;
+      
+      let maxAbs = 0;
+      for (let i = 0; i < samples.length; i++) {
+        result[i] = samples[i] - mean;
+        maxAbs = Math.max(maxAbs, Math.abs(result[i]));
+      }
+      
+      if (maxAbs > 0) {
+        for (let i = 0; i < result.length; i++) {
+          result[i] /= maxAbs;
+        }
+      }
+      
+      return result;
+    };
+    
+    // FFT 实现
+    const nextPowerOfTwo = (n) => 1 << Math.ceil(Math.log2(n));
+    
+    const fft = (input) => {
+      const n = input.length;
+      
+      if (n === 1) return [[input[0], 0]];
+      
+      const even = new Float32Array(n / 2);
+      const odd = new Float32Array(n / 2);
+      
+      for (let i = 0; i < n / 2; i++) {
+        even[i] = input[2 * i];
+        odd[i] = input[2 * i + 1];
+      }
+      
+      const evenFFT = fft(even);
+      const oddFFT = fft(odd);
+      
+      const result = new Array(n);
+      
+      for (let k = 0; k < n / 2; k++) {
+        const angle = -2 * Math.PI * k / n;
+        const twiddle = [Math.cos(angle), Math.sin(angle)];
+        
+        const t = [
+          twiddle[0] * oddFFT[k][0] - twiddle[1] * oddFFT[k][1],
+          twiddle[0] * oddFFT[k][1] + twiddle[1] * oddFFT[k][0]
+        ];
+        
+        result[k] = [evenFFT[k][0] + t[0], evenFFT[k][1] + t[1]];
+        result[k + n / 2] = [evenFFT[k][0] - t[0], evenFFT[k][1] - t[1]];
+      }
+      
+      return result;
+    };
+    
+    const ifft = (input) => {
+      const n = input.length;
+      const conjugated = input.map(([re, im]) => [re, -im]);
+      const result = fftComplex(conjugated);
+      return result.map(([re, im]) => [re / n, -im / n]);
+    };
+    
+    const fftComplex = (input) => {
+      const n = input.length;
+      
+      if (n === 1) return [input[0]];
+      
+      const even = [];
+      const odd = [];
+      
+      for (let i = 0; i < n / 2; i++) {
+        even.push(input[2 * i]);
+        odd.push(input[2 * i + 1]);
+      }
+      
+      const evenFFT = fftComplex(even);
+      const oddFFT = fftComplex(odd);
+      
+      const result = new Array(n);
+      
+      for (let k = 0; k < n / 2; k++) {
+        const angle = -2 * Math.PI * k / n;
+        const twiddle = [Math.cos(angle), Math.sin(angle)];
+        
+        const t = [
+          twiddle[0] * oddFFT[k][0] - twiddle[1] * oddFFT[k][1],
+          twiddle[0] * oddFFT[k][1] + twiddle[1] * oddFFT[k][0]
+        ];
+        
+        result[k] = [evenFFT[k][0] + t[0], evenFFT[k][1] + t[1]];
+        result[k + n / 2] = [evenFFT[k][0] - t[0], evenFFT[k][1] - t[1]];
+      }
+      
+      return result;
+    };
+    
+    // 互相关
+    const crossCorrelate = (signalA, signalB) => {
+      const n = nextPowerOfTwo(signalA.length + signalB.length - 1);
+      
+      const paddedA = new Float32Array(n);
+      const paddedB = new Float32Array(n);
+      paddedA.set(signalA);
+      paddedB.set(signalB);
+      
+      const fftA = fft(paddedA);
+      const fftB = fft(paddedB);
+      
+      const product = fftA.map((a, i) => {
+        const b = fftB[i];
+        return [
+          a[0] * b[0] + a[1] * b[1],
+          a[1] * b[0] - a[0] * b[1]
+        ];
+      });
+      
+      const correlation = ifft(product);
+      
+      const result = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        result[i] = correlation[i][0];
+      }
+      
+      return result;
+    };
+    
+    const findPeakOffset = (correlation, signalBLength) => {
+      let maxValue = -Infinity;
+      let maxIndex = 0;
+      
+      for (let i = 0; i < correlation.length; i++) {
+        if (correlation[i] > maxValue) {
+          maxValue = correlation[i];
+          maxIndex = i;
+        }
+      }
+      
+      const n = correlation.length;
+      if (maxIndex > n / 2) {
+        return maxIndex - n;
+      }
+      return maxIndex;
+    };
+    
+    const calculateConfidence = (signalA, signalB, correlation, peakIndex) => {
+      const idx = peakIndex < 0 ? correlation.length + peakIndex : peakIndex;
+      const maxCorr = correlation[idx];
+      
+      let energyA = 0, energyB = 0;
+      for (let i = 0; i < signalA.length; i++) energyA += signalA[i] * signalA[i];
+      for (let i = 0; i < signalB.length; i++) energyB += signalB[i] * signalB[i];
+      
+      const normFactor = Math.sqrt(energyA * energyB);
+      if (normFactor === 0) return 0;
+      
+      return Math.abs(maxCorr) / normFactor;
+    };
+    
+    // 开始同步
+    window.startSync = async () => {
+      const videos = window.videoFiles.filter(f => f);
+      if (videos.length < 2) {
+        alert('请至少选择 2 个视频文件');
+        return;
+      }
+      
+      const referenceIndex = parseInt(document.getElementById('referenceIndex').value);
+      const sampleRate = 16000;
+      
+      document.getElementById('syncBtn').disabled = true;
+      document.getElementById('progress').classList.add('active');
+      document.getElementById('resultsSection').style.display = 'none';
+      
+      try {
+        // 提取所有音频
+        const audioData = [];
+        const validIndices = [];
+        
+        for (let i = 0; i < 4; i++) {
+          if (window.videoFiles[i]) {
+            document.getElementById('progressText').textContent = 
+              `正在提取视频 ${i + 1} 的音频...`;
+            const samples = await extractAudioFromVideo(window.videoFiles[i], i);
+            audioData.push(preprocessAudio(samples));
+            validIndices.push(i);
+          }
+        }
+        
+        // 找到参考视频在有效索引中的位置
+        const refIndexInValid = validIndices.indexOf(referenceIndex);
+        if (refIndexInValid === -1) {
+          throw new Error('参考视频未选择');
+        }
+        
+        const referenceAudio = audioData[refIndexInValid];
+        
+        // 计算偏移
+        const results = [];
+        
+        for (let i = 0; i < validIndices.length; i++) {
+          const videoIndex = validIndices[i];
+          
+          if (i === refIndexInValid) {
+            results.push({
+              videoIndex,
+              offsetSeconds: 0,
+              offsetSamples: 0,
+              confidence: 1,
+              isReference: true
+            });
+            continue;
+          }
+          
+          document.getElementById('progressText').textContent = 
+            `正在计算视频 ${videoIndex + 1} 的偏移...`;
+          
+          log(`计算视频 ${videoIndex + 1} 相对于参考视频的偏移...`);
+          
+          const targetAudio = audioData[i];
+          const correlation = crossCorrelate(referenceAudio, targetAudio);
+          const offsetSamples = findPeakOffset(correlation, targetAudio.length);
+          const offsetSeconds = offsetSamples / sampleRate;
+          const confidence = calculateConfidence(referenceAudio, targetAudio, correlation, offsetSamples);
+          
+          log(`视频 ${videoIndex + 1}: 偏移 = ${offsetSeconds.toFixed(3)}s, 置信度 = ${(confidence * 100).toFixed(1)}%`);
+          
+          results.push({
+            videoIndex,
+            offsetSeconds,
+            offsetSamples,
+            confidence,
+            isReference: false
+          });
+        }
+        
+        // 显示结果
+        displayResults(results, referenceIndex);
+        
+      } catch (err) {
+        log(`错误: ${err.message}`);
+        console.error(err);
+        document.getElementById('results').innerHTML = 
+          `<div class="error">同步失败: ${err.message}</div>`;
+        document.getElementById('resultsSection').style.display = 'block';
+      } finally {
+        document.getElementById('syncBtn').disabled = false;
+        document.getElementById('progress').classList.remove('active');
+      }
+    };
+    
+    const displayResults = (results, referenceIndex) => {
+      const resultsEl = document.getElementById('results');
+      
+      let html = `<p><strong>参考视频:</strong> 视频 ${referenceIndex + 1}</p>`;
+      
+      results.forEach(r => {
+        const confidenceClass = r.confidence >= 0.7 ? 'high' : r.confidence >= 0.4 ? 'medium' : 'low';
+        const offsetStr = r.offsetSeconds >= 0 
+          ? `+${r.offsetSeconds.toFixed(3)}s (延迟)` 
+          : `${r.offsetSeconds.toFixed(3)}s (领先)`;
+        
+        html += `
+          <div class="result-item ${r.isReference ? 'reference' : ''}">
+            <div class="video-id">
+              视频 ${r.videoIndex + 1} 
+              ${r.isReference ? '(参考)' : ''}
+            </div>
+            <div class="offset">
+              ${r.isReference ? '基准时间' : offsetStr}
+            </div>
+            <div class="confidence ${confidenceClass}">
+              置信度: ${(r.confidence * 100).toFixed(1)}%
+              ${r.confidence >= 0.7 ? '✓ 高' : r.confidence >= 0.4 ? '⚠ 中' : '✗ 低'}
+            </div>
+            ${!r.isReference ? `
+              <div style="margin-top:10px;font-size:12px;color:#666;">
+                偏移采样点: ${r.offsetSamples} (采样率: 16000 Hz)
+              </div>
+            ` : ''}
+          </div>
+        `;
+      });
+      
+      resultsEl.innerHTML = html;
+      document.getElementById('resultsSection').style.display = 'block';
+    };
+    
+    // Initialize
+    updateLanguage();
+    log(currentLang === 'en' ? 'Audio sync tool ready (using Web Audio API)' : '音频同步工具已就绪（使用 Web Audio API）');
+    updateSyncButton();
+  </script>
+</body>
+</html>

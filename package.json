@@ -1,0 +1,56 @@
+{
+  "name": "audio-video-sync",
+  "version": "0.1.0",
+  "description": "Multi-camera video synchronization using audio cross-correlation (FFT-based). Automatically align multiple video timelines by analyzing audio waveforms with millisecond precision.",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "test": "echo \"No tests yet\"",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "video-sync",
+    "audio-sync",
+    "multicam",
+    "multi-camera",
+    "cross-correlation",
+    "fft",
+    "video-alignment",
+    "audio-fingerprint",
+    "video-editing",
+    "ffmpeg",
+    "wasm",
+    "browser"
+  ],
+  "author": "Euan",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/user/audio-video-sync.git"
+  },
+  "homepage": "https://github.com/user/audio-video-sync#readme",
+  "bugs": {
+    "url": "https://github.com/user/audio-video-sync/issues"
+  },
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.10",
+    "@ffmpeg/util": "^0.12.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "rollup": "^4.9.0",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "typescript": "^5.3.0"
+  },
+  "peerDependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
