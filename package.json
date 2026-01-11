@@ -1,6 +1,6 @@
 {
   "name": "audio-video-sync",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Multi-camera video synchronization using audio cross-correlation (FFT-based). Automatically align multiple video timelines by analyzing audio waveforms with millisecond precision.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -31,11 +31,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/user/audio-video-sync.git"
+    "url": "git+https://github.com/EuanTop/audio-video-sync.git"
   },
-  "homepage": "https://github.com/user/audio-video-sync#readme",
+  "homepage": "https://github.com/EuanTop/audio-video-sync#readme",
   "bugs": {
-    "url": "https://github.com/user/audio-video-sync/issues"
+    "url": "https://github.com/EuanTop/audio-video-sync/issues"
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.12.10",
